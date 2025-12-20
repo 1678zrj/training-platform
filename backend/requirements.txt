@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+sqlmodel
+passlib[bcrypt]   # 用于密码加密
+python-jose[cryptography]  # 用于生成 JWT Token
+python-multipart  # 用于处理登录表单
+bcrypt==3.2.0
+pydantic-settings
+python-dotenv

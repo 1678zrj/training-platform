@@ -1,0 +1,14 @@
+# --- 全局忽略 ---
+.DS_Store
+.idea/
+.vscode/
+
+# --- Backend (后端) ---
+backend/venv/
+backend/__pycache__/
+backend/.env
+backend/data/
+
+# --- Frontend (前端) ---
+frontend/node_modules/
+frontend/dist/

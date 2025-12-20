@@ -1,35 +1,17 @@
+/* 引入基础重置样式（可以保留） */
 @import './base.css';
 
+/* 让整个页面铺满屏幕 */
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
+  width: 100%;
+  max-width: 100%; /* 取消最大宽度限制 */
+  margin: 0;       /* 取消居中，靠左对齐 */
+  padding: 0;      /* 取消内边距 */
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
-}
-
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
-}
-
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+/* 确保 body 也是满屏的（针对 base.css 可能有的限制） */
+body {
+  display: block; /* 取消原本的 flex 居中 */
+  margin: 0;
+  padding: 0;
 }

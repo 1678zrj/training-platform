@@ -24,9 +24,25 @@ class Experiment(SQLModel, table=True):
     category_id: int = Field(foreign_key="categories.id")
     image_id: int = Field(foreign_key="images.id")
     title: str
-    doc_path: str
+    description: Optional[str] = None
+    doc_path: Optional[str] = None
     template_path: Optional[str] = None
     dataset_path: Optional[str] = None
+    image_path: Optional[str] = None
+    # --- 新增资源限制字段 ---
+
+    # 1. CPU 限制 (例如: 2.0 表示最多用2个核)
+    cpu_limit: float = Field(default=1.0, description="CPU核数限制")
+
+    # 2. 内存限制 (例如: "2g", "512m")
+    memory_limit: str = Field(default="1g", description="内存限制")
+
+    # 3. GPU 配置
+    use_gpu: bool = Field(default=False, description="是否启用GPU")
+    gpu_count: int = Field(default=0, description="GPU数量")
+
+    # 4. (可选) 存储限制 - 防止学生把磁盘写满
+    storage_limit: str = Field(default="1g", description="磁盘配额")
 
 class UserLab(SQLModel, table=True):
     __tablename__ = "user_labs"

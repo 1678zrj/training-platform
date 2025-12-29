@@ -4,11 +4,14 @@
 .vscode/
 
 # --- Backend (后端) ---
-backend/venv/
-backend/__pycache__/
-backend/.env
-backend/data/
+/backend/venv/
+/backend/__pycache__/
+/backend/.env
+/backend/media/
 
 # --- Frontend (前端) ---
-frontend/node_modules/
-frontend/dist/
+/frontend/node_modules/
+/frontend/dist/
+
+# --- Docker (测试dockerAPI操作) ---
+/docker_test

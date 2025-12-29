@@ -1,23 +1,28 @@
 <script setup>
-import { ref, reactive } from 'vue'
+// src/views/Login.vue Script 部分
+
+// 1. 引入 Vue 核心功能 (你漏掉了这行)
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { User, Lock } from '@element-plus/icons-vue' // 引入图标
+import { useUserStore } from '../stores/user'
+import { User, Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import axios from 'axios' // 记得在 script 顶部引入
-// 1. 初始化路由工具（用于跳转）
+
+const userStore = useUserStore()
 const router = useRouter()
 
-// 2. 定义表单数据
+// 2. 定义表单数据 (你漏掉了这块)
+// 使用 reactive，这样在下面的函数里可以直接用 loginForm.username，不需要加 .value
 const loginForm = reactive({
   username: '',
   password: ''
 })
 
-const isLoading = ref(false) // 按钮加载状态
+// 3. 定义加载状态 (你漏掉了这块)
+const isLoading = ref(false)
 
-// 3. 登录逻辑
-// 修改 handleLogin 函数
 const handleLogin = async () => {
+  // 校验逻辑
   if (!loginForm.username || !loginForm.password) {
     ElMessage.warning('请输入用户名和密码')
     return
@@ -26,26 +31,22 @@ const handleLogin = async () => {
   isLoading.value = true
 
   try {
-    // 发送真实请求
-    const res = await axios.post('/api/v1/auth/login', {
-      username: loginForm.username,
-      password: loginForm.password
-    })
+    // 调用 store 的 login action
+    await userStore.login(loginForm)
 
-    // 登录成功
     ElMessage.success('登录成功')
 
-    // --- 重点：保存 Token ---
-    // 以后所有请求都要带上这个 token，后端才知道你是谁
-    localStorage.setItem('token', res.data.access_token)
-    localStorage.setItem('role', res.data.role)
-
-    router.push('/workspace')
+    // 根据角色跳转
+    if (userStore.role === 0) {
+      router.push('/dashboard') // 学生
+    } else {
+      router.push('/dashboard') // 管理员
+    }
 
   } catch (error) {
-    // 登录失败
     console.error(error)
-    const msg = error.response?.data?.detail || '登录失败，请检查网络'
+    // 防止 error.response 为空导致的报错
+    const msg = error.response?.data?.detail || '登录失败，请检查网络或后端服务'
     ElMessage.error(msg)
   } finally {
     isLoading.value = false

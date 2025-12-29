@@ -6,7 +6,7 @@ from app.services.auth_service import AuthService
 from app.core.security import create_access_token
 
 router = APIRouter()
-
+import httpx
 
 @router.post("/login", response_model=Token)
 def login(user_in: UserLogin, session: Session = Depends(get_session)):

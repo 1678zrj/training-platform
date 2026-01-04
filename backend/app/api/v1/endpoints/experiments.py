@@ -1,9 +1,10 @@
 from typing import List
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Path
 from sqlmodel import Session
 from app.db.session import get_session
 from app.models.lab import Experiment
 from app.services.experiment_service import ExperimentService
+from app.schemas.experiment import ExperimentDetail
 
 router = APIRouter()
 
@@ -17,3 +18,14 @@ def read_experiments(
     URL示例: /api/v1/experiments/?category_id=1
     """
     return ExperimentService.get_experiments_by_category(session, category_id)
+
+
+@router.get("/{exp_id}", response_model=ExperimentDetail)
+def read_experiment_detail(
+    exp_id: int = Path(..., description="实验ID"),
+    session: Session = Depends(get_session)
+):
+    """
+    获取单个实验的详情（包含Markdown内容）
+    """
+    return ExperimentService.get_experiment_detail(session, exp_id)

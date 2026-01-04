@@ -45,9 +45,17 @@ const router = createRouter({
               path: 'submit',
               name: 'StudentSubmitFile',
               component:() => import('../views/student/Submit.vue')
+            },
+              // 新增：实验详情页 (在 category 之后)
+            {
+              path: 'experiment/:id',
+              name: 'ExperimentDetail',
+              component: () => import('../views/student/ExperimentDetail.vue'),
+              meta: { title: '实验详情' }
             }
           ]
         },
+
         // --- 1, 2级权限：通用管理页面 ---
         {
           path: 'dashboard',
@@ -69,7 +77,14 @@ const router = createRouter({
           meta: { roles: [2] } // 只有 2 能进
         }
       ]
-    }
+    },
+    // [新增] 独立的实训环境页面 (不在 Layout 里面)
+    {
+      path: '/lab/:id',
+      name: 'ActiveLab',
+      component: () => import('../views/student/ActiveLab.vue'),
+      meta: { roles: [0, 1, 2] } // 权限控制
+    },
   ]
 })
 

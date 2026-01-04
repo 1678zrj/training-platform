@@ -11,3 +11,4 @@ class Token(SQLModel):
     token_type: str
     role: int
     username: str
+    id: int

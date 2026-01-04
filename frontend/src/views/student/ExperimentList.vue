@@ -1,9 +1,11 @@
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue' // 1. 引入 computed
 import { useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useCategoryStore } from '@/stores/category.js' // 2. 引入 Category Store
 const route = useRoute()
+const router = useRouter()
 const categoryStore = useCategoryStore() // 3. 初始化 Store
 const experiments = ref([])
 const imgBaseUrl = import.meta.env.VITE_DATA_BASE_URL || 'http://127.0.0.1:8000/media'
@@ -24,7 +26,7 @@ const imgBaseUrl = import.meta.env.VITE_DATA_BASE_URL || 'http://127.0.0.1:8000/
 //           id: 101,
 //           title: '吃豆人-强化学习',
 //           description: '基于强化学习算法实现吃豆人游戏的训练与控制',
-//           img_path: '/images/experimental/Packman.png', // 记得在 public/images 放个图，或者用网络图
+//           img_path: '/images/experimental/Packman.png', // 记得在 datasets/images 放个图，或者用网络图
 //         }
 //       ]
 //     } else {
@@ -71,6 +73,7 @@ watch(
 const startLab = (expId) => {
   console.log('进入实训:', expId)
   // 这里以后写 router.push 去具体的实验操作台
+  router.push(`/student/experiment/${expId}`)
 }
 </script>
 

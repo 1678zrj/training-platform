@@ -68,6 +68,7 @@ class ContainerService:
             container_id=docker_info["container_id"],
             host_port=docker_info["host_port"],
             url_token=docker_info["url_token"],
+            base_url=docker_info["base_url"],
             status="running"
         )
         session.add(new_container)

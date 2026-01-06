@@ -59,6 +59,7 @@ class Container(SQLModel, table=True):
     container_id: str
     host_port: int
     url_token: str
+    base_url: str
     status: str = "running"
     created_at: datetime = Field(default_factory=datetime.utcnow)
 

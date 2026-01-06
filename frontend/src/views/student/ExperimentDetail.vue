@@ -81,7 +81,9 @@ onMounted(() => {
 })
 
 const goBack = () => {
-  router.back()
+  // router.back()
+  // 明确指定要去哪里，不要依赖历史记录
+    router.push({ name: 'ExperimentList', params: { id: experiment.category_id || 1 } })
 }
 </script>
 

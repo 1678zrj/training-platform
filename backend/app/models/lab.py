@@ -16,7 +16,7 @@ class Image(SQLModel, table=True):
     name: str
     docker_tag: str
     default_port: int = 8888
-    work_dir: str = "/workspace"
+    work_dir: str = "/home/jovyan/work"
 
 class Experiment(SQLModel, table=True):
     __tablename__ = "experiments"
@@ -27,6 +27,7 @@ class Experiment(SQLModel, table=True):
     description: Optional[str] = None
     doc_path: Optional[str] = None
     template_path: Optional[str] = None
+    # 实验的私有数据集或文件路径，和公有的区别开
     dataset_path: Optional[str] = None
     image_path: Optional[str] = None
     # --- 新增资源限制字段 ---

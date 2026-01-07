@@ -27,7 +27,9 @@ class DockerService:
             mem_limit: str,
             use_gpu: bool,
             host_work_dir: str,  # 宿主机挂载路径
-            container_work_dir: str = "/workspace"  # 容器内路径
+            host_dataset_dir: str, # 宿主机公共数据集挂载路径
+            container_work_dir: str = "/home/jovyan/work",  # 容器内路径
+            container_dataset_dir: str = "/datasets"
     ) -> dict:
         """
         启动容器的核心逻辑
@@ -45,6 +47,19 @@ class DockerService:
         if use_gpu:
             # 请求所有 GPU (需安装 nvidia-container-toolkit)
             device_requests.append(DeviceRequest(count=-1, capabilities=[['gpu']]))
+        volumes = {
+            # 用户实验目录（读写）
+            host_work_dir: {
+                'bind': container_work_dir,
+                'mode': 'rw'
+            },
+            # 公共数据集（只读）
+            host_dataset_dir: {
+                'bind': container_dataset_dir,
+                'mode': 'ro'
+            }
+        }
+
         # 3. 构造 Jupyter 启动命令
         # 核心修改点：显式指定启动命令，注入允许 iframe 的 Header 配置
         # 注意：这会覆盖 Dockerfile 中的 CMD
@@ -71,7 +86,7 @@ class DockerService:
                 # 端口映射: 容器8888 -> 宿主机随机端口
                 ports={'8888/tcp': host_port},
                 # 挂载目录: 保证学生代码重启不丢
-                volumes={host_work_dir: {'bind': container_work_dir, 'mode': 'rw'}},
+                volumes=volumes,
                 # 资源限制
                 nano_cpus=int(cpu_limit * 1e9),  # docker sdk 单位是纳秒
                 mem_limit=mem_limit,

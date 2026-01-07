@@ -45,6 +45,7 @@ class ContainerService:
             if os.path.exists(template_src):
                 # 复制所有文件到学生目录
                 shutil.copytree(template_src, base_path, dirs_exist_ok=True)
+        host_dataset_dir = os.path.join(os.getcwd(), "media", "datasets")
 
         # 4. 调用 DockerService 启动
         try:
@@ -56,6 +57,7 @@ class ContainerService:
                 mem_limit=experiment.memory_limit,
                 use_gpu=experiment.use_gpu,
                 host_work_dir=base_path,
+                host_dataset_dir=host_dataset_dir,
                 container_work_dir=image.work_dir
             )
         except Exception as e:

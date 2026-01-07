@@ -29,7 +29,9 @@ async def lifespan(app: FastAPI):
 
             # 创建镜像 (Mock)
             img = Image(name="base-notebook", docker_tag="lab-images/base-notebook:latest")
+            img2 = Image(name="scipy-notebook", docker_tag="lab-images/scipy-notebook:latest")
             session.add(img)
+            session.add(img2)
             session.commit()
             session.refresh(img)
 
@@ -47,15 +49,15 @@ async def lifespan(app: FastAPI):
                 image_id=img.id,
                 title="吃豆人-DQN",
                 doc_path="/docs/pacman.md",
-                image_path="/images/experimental/Packman.png",
+                image_path="/images/Packman.png",
                 description="基于强化学习算法实现吃豆人游戏的训练与控制"
             )
             exp2 = Experiment(
                 category_id=cat1.id,
-                image_id=img.id,
+                image_id=img2.id,
                 title="大语言模型水印检测",
                 doc_path="/docs/watermark.md",
-                image_path="/images/experimental/Watermark.png",
+                image_path="/images/Watermark.png",
                 description="实现大模型文本水印嵌入与效果测试"
             )
             session.add(exp1)

@@ -71,10 +71,11 @@ class DockerService:
             "--allow-root",  # 允许 root 运行（防止部分容器报错）
             "--ServerApp.token=" + token,  # 显式指定 Token
             "--ServerApp.allow_origin='*'",  # 允许跨域
-            f"--ServerApp.base_url={base_url_path}",
+            f"--ServerApp.base_url=/jupyter-proxy/{host_port}/",
             # "--ServerApp.allow_remote_access=True",  # 必选：允许 nip.io 访问
             # 下面这一行是解决“拒绝连接/拒绝嵌入”的关键：
             "--ServerApp.tornado_settings={'headers': {'Content-Security-Policy': 'frame-ancestors *', 'Access-Control-Allow-Origin': '*'}}"
+            # f"--ServerApp.cookie_options={{'path': '/jupyter-proxy/{host_port}/'}}"
         ]
         # 4. 启动容器
         try:
@@ -84,7 +85,11 @@ class DockerService:
                 # 传入我们构造的带参数的启动命令
                 command=jupyter_cmd,
                 # 端口映射: 容器8888 -> 宿主机随机端口
-                ports={'8888/tcp': host_port},
+                # ports={'8888/tcp': host_port},
+                # 改成这样确保只有本机才能够访问容器
+                ports={
+                    '8888/tcp': ('127.0.0.1', host_port)  # ★ 核心修改
+                },
                 # 挂载目录: 保证学生代码重启不丢
                 volumes=volumes,
                 # 资源限制
@@ -137,3 +142,4 @@ class DockerService:
         except Exception as e:
             print(f"停止容器失败: {e}")
             raise e
+

@@ -17,28 +17,66 @@ const loadingText = ref('正在请求实验资源...') // 增加一个动态文�
 
 // --- 核心优化 1: 心跳检测函数 ---
 // 尝试连接 Jupyter，直到成功或超时
+// const waitForJupyter = async (url) => {
+//   const maxRetries = 30 // 最多试 30 次
+//   const interval = 1000 // 每次间隔 1 秒
+//
+//   for (let i = 0; i < maxRetries; i++) {
+//     try {
+//       loadingText.value = `环境启动中 (${i + 1}s)...`
+//
+//       // mode: 'no-cors' 是关键！
+//       // 因为 Jupyter 还没配跨域，浏览器默认会拦截 fetch。
+//       // 用 no-cors 我们拿不到内容，但只要不报 Network Error，就说明端口通了！
+//       await fetch(url, { mode: 'no-cors' })
+//
+//       return true // 连接成功
+//     } catch (e) {
+//       // 连接失败（端口还没开），等待 1 秒后重试
+//       await new Promise(r => setTimeout(r, interval))
+//     }
+//   }
+//   return false // 超时
+// }
 const waitForJupyter = async (url) => {
-  const maxRetries = 30 // 最多试 30 次
-  const interval = 1000 // 每次间隔 1 秒
+  const maxRetries = 50; // Jupyter 启动较慢，建议设大一点，50秒比较稳妥
+  const interval = 1000;
 
   for (let i = 0; i < maxRetries; i++) {
     try {
-      loadingText.value = `环境启动中 (${i + 1}s)...`
+      loadingText.value = `环境启动中 (${i + 1}s)...`;
 
-      // mode: 'no-cors' 是关键！
-      // 因为 Jupyter 还没配跨域，浏览器默认会拦截 fetch。
-      // 用 no-cors 我们拿不到内容，但只要不报 Network Error，就说明端口通了！
-      await fetch(url, { mode: 'no-cors' })
+      // 1. 去掉 no-cors，我们需要读取 status
+      // 2. 如果你的 URL 是带 token 的，直接 fetch 即可
+      const res = await fetch(url, {
+        method: 'GET',
+        credentials: 'omit', // 👈 就加这一行，保平安
+        // 如果 Nginx 没有配 CORS 头，可能需要加上 credentials 或 mode，
+        // 但通常 Nginx 代理后，前端视为同源，直接 fetch 没问题。
+      });
 
-      return true // 连接成功
+      // 关键判断！
+      // Nginx 返回 502 (Bad Gateway) 时，res.ok 为 false
+      // 只有当 Jupyter 真正返回 200 OK 时，res.ok 才为 true
+      if (res.ok) {
+        return true; // 成功！
+      }
+
+      // 如果是 502/404/503，说明容器还没准备好，继续等待
+      console.log(`Waiting... Status: ${res.status}`);
+
     } catch (e) {
-      // 连接失败（端口还没开），等待 1 秒后重试
-      await new Promise(r => setTimeout(r, interval))
+      // 网络错误（比如 Nginx 还没起，或者断网），也继续等待
+      console.log('Network error, retrying...');
     }
-  }
-  return false // 超时
-}
 
+    // 等待 1 秒再试
+    await new Promise(r => setTimeout(r, interval));
+  }
+
+  loadingText.value = "启动超时，请刷新重试";
+  return false; // 超时
+}
 // 1. 初始化：加载容器
 const initLab = async () => {
   try {
@@ -59,7 +97,9 @@ const initLab = async () => {
     // 【核心修改】拼接带路径的 URL
     // 格式变成: http://localhost:32768/u1_e101_xxxx/lab?token=...
     // 注意：axios返回的 base_url 开头带了 '/', 拼接时要注意
-    const targetUrl = `http://${location.hostname}:${host_port}${base_url}/lab?token=${url_token}`
+    // const targetUrl = `http://${location.hostname}:${host_port}${base_url}/?token=${url_token}`
+    const targetUrl = `/jupyter-proxy/${host_port}/?token=${url_token}`
+    // const targetUrl = `/lab-${host_port}/?token=${url_token}`
     // 2. 开始轮询，直到容器准备好
     const isReady = await waitForJupyter(targetUrl)
 

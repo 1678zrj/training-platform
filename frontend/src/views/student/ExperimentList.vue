@@ -8,33 +8,9 @@ const route = useRoute()
 const router = useRouter()
 const categoryStore = useCategoryStore() // 3. 初始化 Store
 const experiments = ref([])
-const imgBaseUrl = import.meta.env.VITE_DATA_BASE_URL || 'http://127.0.0.1:8000/media'
-// 模拟：根据分类ID获取实验列表
-// 真实场景：axios.get(`/api/v1/experiments?category_id=${id}`)
-// const fetchExperiments = (categoryId) => {
-//   // 模拟 loading
-//   experiments.value = []
-//
-//   console.log(`正在加载分类 ID: ${categoryId} 的数据...`)
-//   // 模拟假数据
-//   setTimeout(() => {
-//     // 这里简单做一个映射，实际是后端查库
-//     if (categoryId === '1') {
-//       categoryTitle.value = '人工智能原理'
-//       experiments.value = [
-//         {
-//           id: 101,
-//           title: '吃豆人-强化学习',
-//           description: '基于强化学习算法实现吃豆人游戏的训练与控制',
-//           img_path: '/images/experimental/Packman.png', // 记得在 datasets/images 放个图，或者用网络图
-//         }
-//       ]
-//     } else {
-//       categoryTitle.value = '其他分类'
-//       experiments.value = [] // 空数据测试
-//     }
-//   }, 300)
-// }
+// const imgBaseUrl = import.meta.env.VITE_DATA_BASE_URL || 'http://127.0.0.1:8000/media'
+const imgBaseUrl = import.meta.env.VITE_DATA_BASE_URL || '/media'
+
 // 4. 使用 computed 自动计算标题
 // 逻辑：拿着当前路由的 id，去 store 的 categories 数组里找对应的名字
 const categoryTitle = computed(() => {

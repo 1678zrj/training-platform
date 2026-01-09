@@ -9,7 +9,7 @@ from docker.types import DeviceRequest
 
 class DockerService:
     client = docker.from_env()
-
+    NETWORK_NAME = "jupyter-bridge-net"
     @staticmethod
     def find_free_port() -> int:
         """寻找一个可用的宿主机端口 (用于映射 Jupyter)"""
@@ -36,12 +36,13 @@ class DockerService:
         """
         # 1. 准备端口和 Token
         host_port = DockerService.find_free_port()
+        container_name = f"u{user_id}_e{exp_id}"
+
+        base_url_path = f"/lab/{container_name}"
+
         token = os.urandom(16).hex()  # 生成随机 Token 用于 Jupyter 安全验证
         # 【新增】生成唯一的 Base URL 路径
-        # 比如生成 "/u1_e101_a7b2c/" 这样的路径
-        # 加上随机后缀是为了防止同一个用户反复开关同一个实验导致路径重复
-        random_suffix = secrets.token_hex(4)
-        base_url_path = f"/u{user_id}_e{exp_id}_{random_suffix}"
+
         # 2. 准备 GPU 配置
         device_requests = []
         if use_gpu:
@@ -71,25 +72,26 @@ class DockerService:
             "--allow-root",  # 允许 root 运行（防止部分容器报错）
             "--ServerApp.token=" + token,  # 显式指定 Token
             "--ServerApp.allow_origin='*'",  # 允许跨域
-            f"--ServerApp.base_url=/jupyter-proxy/{host_port}/",
+            f"--ServerApp.base_url={base_url_path}/",
             # "--ServerApp.allow_remote_access=True",  # 必选：允许 nip.io 访问
             # 下面这一行是解决“拒绝连接/拒绝嵌入”的关键：
-            "--ServerApp.tornado_settings={'headers': {'Content-Security-Policy': 'frame-ancestors *', 'Access-Control-Allow-Origin': '*'}}"
-            # f"--ServerApp.cookie_options={{'path': '/jupyter-proxy/{host_port}/'}}"
+            "--ServerApp.tornado_settings={'headers': {'Content-Security-Policy': 'frame-ancestors *', 'Access-Control-Allow-Origin': '*'}}",
+            f"--ServerApp.cookie_options={{'path': '{base_url_path}/'}}"
         ]
         # 4. 启动容器
         try:
             container = DockerService.client.containers.run(
                 image=image_tag,
                 detach=True,
+                network=DockerService.NETWORK_NAME,
                 # 传入我们构造的带参数的启动命令
                 command=jupyter_cmd,
                 # 端口映射: 容器8888 -> 宿主机随机端口
                 # ports={'8888/tcp': host_port},
                 # 改成这样确保只有本机才能够访问容器
-                ports={
-                    '8888/tcp': ('127.0.0.1', host_port)  # ★ 核心修改
-                },
+                # ports={
+                #     '8888/tcp': ('127.0.0.1', host_port)  # ★ 核心修改
+                # },
                 # 挂载目录: 保证学生代码重启不丢
                 volumes=volumes,
                 # 资源限制
@@ -103,7 +105,7 @@ class DockerService:
                 },
                 working_dir=container_work_dir,
                 # 命名规范: user_1_exp_101
-                name=f"u{user_id}_e{exp_id}",
+                name=container_name,
                 # 自动重启策略
                 restart_policy={"Name": "on-failure", "MaximumRetryCount": 3}
             )

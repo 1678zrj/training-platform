@@ -98,8 +98,10 @@ const initLab = async () => {
     // 格式变成: http://localhost:32768/u1_e101_xxxx/lab?token=...
     // 注意：axios返回的 base_url 开头带了 '/', 拼接时要注意
     // const targetUrl = `http://${location.hostname}:${host_port}${base_url}/?token=${url_token}`
-    const targetUrl = `/jupyter-proxy/${host_port}/?token=${url_token}`
-    // const targetUrl = `/lab-${host_port}/?token=${url_token}`
+    // const targetUrl = `/jupyter-proxy/${host_port}/?token=${url_token}`
+    // 拼接最终 URL
+    // 结果: /lab/u1_e101/?token=xxxx
+    const targetUrl = `${base_url}/?token=${url_token}`
     // 2. 开始轮询，直到容器准备好
     const isReady = await waitForJupyter(targetUrl)
 

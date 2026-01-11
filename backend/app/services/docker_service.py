@@ -10,13 +10,13 @@ from docker.types import DeviceRequest
 class DockerService:
     client = docker.from_env()
     NETWORK_NAME = "jupyter-bridge-net"
-    @staticmethod
-    def find_free_port() -> int:
-        """寻找一个可用的宿主机端口 (用于映射 Jupyter)"""
-        with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-            s.bind(('', 0))
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            return s.getsockname()[1]
+    # @staticmethod
+    # def find_free_port() -> int:
+    #     """寻找一个可用的宿主机端口 (用于映射 Jupyter)"""
+    #     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+    #         s.bind(('', 0))
+    #         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    #         return s.getsockname()[1]
 
     @staticmethod
     def run_container(
@@ -35,7 +35,7 @@ class DockerService:
         启动容器的核心逻辑
         """
         # 1. 准备端口和 Token
-        host_port = DockerService.find_free_port()
+        # host_port = DockerService.find_free_port()
         container_name = f"u{user_id}_e{exp_id}"
 
         base_url_path = f"/lab/{container_name}"
@@ -89,9 +89,7 @@ class DockerService:
                 # 端口映射: 容器8888 -> 宿主机随机端口
                 # ports={'8888/tcp': host_port},
                 # 改成这样确保只有本机才能够访问容器
-                # ports={
-                #     '8888/tcp': ('127.0.0.1', host_port)  # ★ 核心修改
-                # },
+                ports={'8888/tcp': ('127.0.0.1', 0)},
                 # 挂载目录: 保证学生代码重启不丢
                 volumes=volumes,
                 # 资源限制
@@ -110,6 +108,10 @@ class DockerService:
                 restart_policy={"Name": "on-failure", "MaximumRetryCount": 3}
             )
 
+            container.reload()
+            host_port = int(
+                container.attrs["NetworkSettings"]["Ports"]["8888/tcp"][0]["HostPort"]
+            )
             return {
                 "container_id": container.id,
                 "host_port": host_port,

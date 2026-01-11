@@ -17,27 +17,6 @@ const loadingText = ref('正在请求实验资源...') // 增加一个动态文�
 
 // --- 核心优化 1: 心跳检测函数 ---
 // 尝试连接 Jupyter，直到成功或超时
-// const waitForJupyter = async (url) => {
-//   const maxRetries = 30 // 最多试 30 次
-//   const interval = 1000 // 每次间隔 1 秒
-//
-//   for (let i = 0; i < maxRetries; i++) {
-//     try {
-//       loadingText.value = `环境启动中 (${i + 1}s)...`
-//
-//       // mode: 'no-cors' 是关键！
-//       // 因为 Jupyter 还没配跨域，浏览器默认会拦截 fetch。
-//       // 用 no-cors 我们拿不到内容，但只要不报 Network Error，就说明端口通了！
-//       await fetch(url, { mode: 'no-cors' })
-//
-//       return true // 连接成功
-//     } catch (e) {
-//       // 连接失败（端口还没开），等待 1 秒后重试
-//       await new Promise(r => setTimeout(r, interval))
-//     }
-//   }
-//   return false // 超时
-// }
 const waitForJupyter = async (url) => {
   const maxRetries = 50; // Jupyter 启动较慢，建议设大一点，50秒比较稳妥
   const interval = 1000;
@@ -89,16 +68,8 @@ const initLab = async () => {
       }
     })
 
-    const { host_port, url_token, base_url } = res.data
+    const { url_token, base_url } = res.data
     // 拼接 Jupyter URL
-    // iframeUrl.value = `http://${location.hostname}:${host_port}/?token=${url_token}`
-    // const targetUrl = `http://${location.hostname}:${host_port}/?token=${url_token}`
-    // const targetUrl = `http://lab-${host_port}.127.0.0.1.nip.io:${host_port}/?token=${url_token}`
-    // 【核心修改】拼接带路径的 URL
-    // 格式变成: http://localhost:32768/u1_e101_xxxx/lab?token=...
-    // 注意：axios返回的 base_url 开头带了 '/', 拼接时要注意
-    // const targetUrl = `http://${location.hostname}:${host_port}${base_url}/?token=${url_token}`
-    // const targetUrl = `/jupyter-proxy/${host_port}/?token=${url_token}`
     // 拼接最终 URL
     // 结果: /lab/u1_e101/?token=xxxx
     const targetUrl = `${base_url}/?token=${url_token}`

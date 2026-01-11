@@ -22,6 +22,7 @@ async def lifespan(app: FastAPI):
             print("--- 初始化: 创建默认管理员 admin / 123456 ---")
             crud_user.create(session, "admin", "123456", role=2)
             crud_user.create(session, "zs", "123456", role=0)
+            crud_user.create(session, "ls", "123456", role=0)
             crud_user.create(session, "zj1", "123456", role=1)
         # 2. [新增] 初始化分类数据 (如果表是空的)
         if not session.exec(select(Category)).first():

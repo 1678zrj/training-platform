@@ -20,11 +20,11 @@ export default defineConfig({
     host:true,
     proxy:{
       '/api':{
-        target:'http://localhost:80',
+        target:'http://localhost:8000',
         changeOrigin:true
       },
       '/media':{
-        target:'http://localhost:80',
+        target:'http://localhost:8000',
         changeOrigin:true
       },
       '/lab': { // 匹配新的路径前缀

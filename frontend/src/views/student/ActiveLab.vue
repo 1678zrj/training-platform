@@ -5,6 +5,9 @@ import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, SwitchButton, Loading } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user.js'
+import request from '@/utils/request.js'
+
+
 const userStore = useUserStore() // 初始化 Store
 const route = useRoute()
 const router = useRouter()
@@ -61,10 +64,9 @@ const initLab = async () => {
   try {
     // 调用 start 接口。因为后端写了 get_or_create，
     // 所以如果容器已经活着，它会直接返回 URL，不会重复创建，非常安全。
-    const res = await axios.post('/api/v1/containers/start', null, {
+    const res = await request.post('/api/v1/containers/start', null, {
       params: {
-        experiment_id: expId,
-        user_id: userStore.id
+        experiment_id: expId
       }
     })
 
@@ -117,10 +119,9 @@ const endLab = () => {
   ).then(async () => {
     // 用户点击确定
     try {
-      await axios.post('/api/v1/containers/stop', null, {
+      await request.post('/api/v1/containers/stop', null, {
         params: {
-          experiment_id: expId,
-          user_id: userStore.id
+          experiment_id: expId
         }
       })
       ElMessage.success('实验已结束，环境已回收')

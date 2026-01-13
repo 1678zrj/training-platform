@@ -46,7 +46,7 @@ const handleLogin = async () => {
   } catch (error) {
     console.error(error)
     // 防止 error.response 为空导致的报错
-    const msg = error.response?.data?.detail || '登录失败，请检查网络或后端服务'
+    const msg = error.response?.data?.detail || '登录失败，用户名或密码错误'
     ElMessage.error(msg)
   } finally {
     isLoading.value = false

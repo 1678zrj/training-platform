@@ -25,6 +25,7 @@ export const useUserStore = defineStore('user', () => {
     localStorage.setItem('token', token.value)
     localStorage.setItem('role', role.value)
     localStorage.setItem('username', username.value)
+    localStorage.setItem('id', id.value)
   }
 
   // 动作：登出

@@ -58,7 +58,8 @@ class ContainerService:
                 use_gpu=experiment.use_gpu,
                 host_work_dir=base_path,
                 host_dataset_dir=host_dataset_dir,
-                container_work_dir=image.work_dir
+                container_work_dir=image.work_dir,
+                gpu_device_ids=experiment.gpu_device_ids
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"容器启动失败: {str(e)}")

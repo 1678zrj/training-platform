@@ -40,7 +40,7 @@ class Experiment(SQLModel, table=True):
 
     # 3. GPU 配置
     use_gpu: bool = Field(default=False, description="是否启用GPU")
-    gpu_count: int = Field(default=0, description="GPU数量")
+    gpu_device_ids: Optional[str] = Field(default=None, description="指定GPU ID，如 '0' 或 'all',None表示不分配")
 
     # 4. (可选) 存储限制 - 防止学生把磁盘写满
     storage_limit: str = Field(default="1g", description="磁盘配额")

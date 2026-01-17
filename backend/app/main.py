@@ -50,6 +50,7 @@ async def lifespan(app: FastAPI):
                 image_id=img.id,
                 title="吃豆人-DQN",
                 doc_path="/docs/pacman.md",
+                template_path="/exp1",
                 image_path="/images/Packman.png",
                 description="基于强化学习算法实现吃豆人游戏的训练与控制"
             )
@@ -58,8 +59,12 @@ async def lifespan(app: FastAPI):
                 image_id=img2.id,
                 title="大语言模型水印检测",
                 doc_path="/docs/watermark.md",
+                template_path="/exp2",
                 image_path="/images/Watermark.png",
-                description="实现大模型文本水印嵌入与效果测试"
+                description="实现大模型文本水印嵌入与效果测试",
+                use_gpu=True,
+                gpu_device_ids="0"
+
             )
             session.add(exp1)
             session.add(exp2)

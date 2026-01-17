@@ -29,7 +29,8 @@ class DockerService:
             host_work_dir: str,  # 宿主机挂载路径
             host_dataset_dir: str, # 宿主机公共数据集挂载路径
             container_work_dir: str = "/home/jovyan/work",  # 容器内路径
-            container_dataset_dir: str = "/datasets"
+            container_dataset_dir: str = "/datasets",
+            gpu_device_ids: str = None # GPU的分配
     ) -> dict:
         """
         启动容器的核心逻辑
@@ -45,9 +46,18 @@ class DockerService:
 
         # 2. 准备 GPU 配置
         device_requests = []
-        if use_gpu:
+        if use_gpu and gpu_device_ids:
             # 请求所有 GPU (需安装 nvidia-container-toolkit)
-            device_requests.append(DeviceRequest(count=-1, capabilities=[['gpu']]))
+            if gpu_device_ids=="all":
+                device_requests.append(DeviceRequest(count=-1, capabilities=[['gpu']]))
+            else:
+                gpu_ids = [id_.strip() for id_ in gpu_device_ids.split(",") if id_.strip()]
+                device_requests.append(
+                    DeviceRequest(
+                        device_ids=gpu_ids,
+                        capabilities=[['gpu']]
+                    )
+                )
         volumes = {
             # 用户实验目录（读写）
             host_work_dir: {
@@ -146,4 +156,9 @@ class DockerService:
         except Exception as e:
             print(f"停止容器失败: {e}")
             raise e
+
+    @staticmethod
+    def get_container_status(container_id:int):
+        container = DockerService.client.containers.get(container_id)
+        return container.status
 

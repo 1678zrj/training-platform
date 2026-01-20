@@ -32,6 +32,9 @@ class DockerService:
             container_dataset_dir: str = "/datasets",
             gpu_device_ids: str = None # GPU的分配
     ) -> dict:
+
+        container = None
+
         """
         启动容器的核心逻辑
         """
@@ -90,7 +93,7 @@ class DockerService:
         ]
         # 4. 启动容器
         try:
-            container = DockerService.client.containers.run(
+            container = DockerService.client.containers.create(
                 image=image_tag,
                 detach=True,
                 network=DockerService.NETWORK_NAME,
@@ -117,7 +120,12 @@ class DockerService:
                 # 自动重启策略
                 restart_policy={"Name": "on-failure", "MaximumRetryCount": 3}
             )
+            container_id = container.id  # ✅ 此时已确定
 
+            # 2️⃣ start（若失败，容器仍可 remove）
+            container.start()
+
+            # 3️⃣ inspect / reload
             container.reload()
             host_port = int(
                 container.attrs["NetworkSettings"]["Ports"]["8888/tcp"][0]["HostPort"]
@@ -129,7 +137,11 @@ class DockerService:
                 "base_url": base_url_path  # 【新增】返回这个路径给前端
             }
         except Exception as e:
-            print(f"Docker启动失败: {e}")
+            if container:
+                try:
+                    container.remove(force=True)
+                except Exception:
+                    pass
             raise e
 
     @staticmethod
@@ -157,8 +169,5 @@ class DockerService:
             print(f"停止容器失败: {e}")
             raise e
 
-    @staticmethod
-    def get_container_status(container_id:int):
-        container = DockerService.client.containers.get(container_id)
-        return container.status
+
 

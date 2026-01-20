@@ -60,7 +60,7 @@ const startLab = (expId) => {
       <span class="main-title">{{ categoryTitle }}</span>
     </div>
 
-    <div class="section-title">作业</div>
+
 
     <div class="card-list">
       <div v-for="exp in experiments" :key="exp.id" class="exp-card">

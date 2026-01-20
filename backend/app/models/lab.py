@@ -1,5 +1,7 @@
 from datetime import datetime
 from typing import Optional
+
+from sqlalchemy import UniqueConstraint
 from sqlmodel import SQLModel, Field
 
 class Category(SQLModel, table=True):
@@ -54,14 +56,22 @@ class UserLab(SQLModel, table=True):
 
 class Container(SQLModel, table=True):
     __tablename__ = "containers"
+    # 添加联合唯一约束：同一个 user_id 和 experiment_id 只能有一条记录
+    __table_args__ = (
+        UniqueConstraint("user_id", "experiment_id", name="unique_user_experiment_container"),
+    )
+
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="users.id")
     experiment_id: int = Field(foreign_key="experiments.id")
-    container_id: str
-    host_port: int
-    url_token: str
-    base_url: str
-    status: str = "running"
+    # 容器信息（允许为空，因为占位时还不知道这些）
+    container_id: Optional[str] = None
+    host_port: Optional[int] = None
+    url_token: Optional[str] = None
+    base_url: Optional[str] = None
+
+    # 状态增加一种：creating
+    status: str = Field(default="creating")
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Submission(SQLModel, table=True):

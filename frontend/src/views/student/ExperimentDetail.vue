@@ -3,12 +3,12 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import MarkdownIt from 'markdown-it'
-import { ArrowLeft } from '@element-plus/icons-vue'
+import { RefreshLeft,ArrowLeft } from '@element-plus/icons-vue'
 // 引入 github 风格的代码样式
 import 'github-markdown-css/github-markdown.css'
-import { ElLoading,ElMessage } from 'element-plus' // 引入 Loading 服务
+import { ElMessageBox,ElMessage } from 'element-plus' // 引入 Loading 服务
 import { useUserStore } from '@/stores/user.js'
-
+import request from '@/utils/request.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -34,6 +34,35 @@ const fetchDetail = async () => {
     isLoading.value = false
   }
 }
+// 重置环境逻辑
+const resetEnv = async () => {
+  try {
+    // 二次确认，防止手滑
+    await ElMessageBox.confirm(
+      '此操作将永久删除您在该实验中保存的所有代码和数据，并恢复到初始状态。是否继续？',
+      '危险操作警告',
+      {
+        confirmButtonText: '确定重置',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+
+    // 发送请求
+    await request.post('/api/v1/containers/reset', null, {
+      params: { experiment_id: route.params.id }
+    })
+
+    ElMessage.success('环境已重置成功，请点击“开始实验”')
+
+  } catch (error) {
+    if (error !== 'cancel') {
+       // 如果是后端返回 400 (容器正在运行)，拦截器会报错，这里不用额外处理
+       console.error(error)
+    }
+  }
+}
+
 
 // 按钮点击事件
 // const startExp = async () => {
@@ -109,19 +138,28 @@ const goBack = () => {
 
       <div class="right-sidebar">
         <div class="sidebar-card">
-          <h3 class="card-title">学习进度</h3>
-          <div class="progress-box">
-            <span class="status-text">未完成</span>
-            <el-progress :percentage="0" :show-text="false" class="progress-bar"/>
-            <div class="percent-num">0%</div>
-          </div>
+<!--          <h3 class="card-title">学习进度</h3>-->
+<!--          <div class="progress-box">-->
+<!--            <span class="status-text">未完成</span>-->
+<!--            <el-progress :percentage="0" :show-text="false" class="progress-bar"/>-->
+<!--            <div class="percent-num">0%</div>-->
+<!--          </div>-->
           <el-button type="primary" class="action-btn" @click="startExp()">开始实验 (Docker)</el-button>
+          <el-button
+          type="warning"
+          link
+          class="reset-btn"
+          @click="resetEnv"
+        >
+          <el-icon><RefreshLeft /></el-icon>
+          <span style="margin-left: 4px">重置环境</span>
+        </el-button>
         </div>
 
-        <div class="sidebar-card">
-          <h3 class="card-title">相关推荐</h3>
-          <div class="empty-placeholder">暂无推荐</div>
-        </div>
+<!--        <div class="sidebar-card">-->
+<!--          <h3 class="card-title">相关推荐</h3>-->
+<!--          <div class="empty-placeholder">暂无推荐</div>-->
+<!--        </div>-->
       </div>
     </div>
   </div>
@@ -252,9 +290,25 @@ const goBack = () => {
 .progress-bar { margin: 10px 0; }
 .percent-num { text-align: right; color: #999; font-size: 12px; }
 
+.action-area {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* 按钮之间的间距 */
+}
+
 .action-btn {
   width: 100%;
+  //margin: 0;
 }
+.reset-btn {
+  width: 100%;
+  margin: 0;
+  color: #E6A23C;
+}
+.reset-btn:hover {
+  color: #b88230;
+}
+
 
 .empty-placeholder { color: #999; font-size: 13px; text-align: center; padding: 20px 0; }
 </style>

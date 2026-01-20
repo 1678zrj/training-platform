@@ -69,8 +69,14 @@ const initLab = async () => {
         experiment_id: expId
       }
     })
+    const containerInfo = res.data
+    if (containerInfo.status === 'creating'){
+      loadingText.value='排队中，资源分配中'
+      await waitForToken(expId)
+      return
+    }
 
-    const { url_token, base_url } = res.data
+    const { url_token, base_url } = containerInfo
     // 拼接 Jupyter URL
     // 拼接最终 URL
     // 结果: /lab/u1_e101/?token=xxxx
@@ -94,10 +100,39 @@ const initLab = async () => {
   }
 }
 
-// // 2. 返回上一页 (不关闭容器)
-// const goBack = () => {
-//   router.back()
-// }
+const waitForToken = async (eid) => {
+  const maxRetries = 10
+
+  for (let i = 0; i < maxRetries; i++) {
+    // 我们可以复用 /start 接口，或者专门写一个 /status 接口
+    // 因为 /start 是 get_or_create，所以查也是它
+    const res = await request.post('/api/v1/containers/start', null, {
+      params: { experiment_id: eid }
+    })
+
+    if (res.data.status === 'running' && res.data.url_token) {
+      // 拿到了！重新走正常初始化流程
+      // 这里简单处理：直接刷新页面或递归调用
+      // 为了代码简单，我们把获取到 Token 后的逻辑提取出来
+      const { url_token, base_url } = res.data
+      const targetUrl = `${base_url}/?token=${url_token}`
+      const isReady = await waitForJupyter(targetUrl)
+      if (isReady) {
+      // 3. 只有准备好了，才把 URL 给 iframe，避免白屏或错误页
+      iframeUrl.value = targetUrl
+      } else {
+        throw new Error('容器启动超时')
+      }
+      return
+    }
+
+    await new Promise(r => setTimeout(r, 1000))
+  }
+
+  throw new Error('获取资源超时')
+}
+
+
 // --- 核心优化 2: 显式跳转 ---
 // 解决“点多次才能返回”的问题
 const goBack = () => {

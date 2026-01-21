@@ -4,7 +4,7 @@ from sqlmodel import Session
 from app.db.session import get_session
 from app.models.lab import Experiment
 from app.services.experiment_service import ExperimentService
-from app.schemas.experiment import ExperimentDetail
+from app.schemas.experiment import ExperimentDetail,ExperimentId
 
 router = APIRouter()
 
@@ -29,3 +29,23 @@ def read_experiment_detail(
     获取单个实验的详情（包含Markdown内容）
     """
     return ExperimentService.get_experiment_detail(session, exp_id)
+
+@router.get("/{exp_id}/next", response_model=ExperimentId)
+def read_experiment_detail(
+    exp_id: int = Path(..., description="当前实验ID"),
+    session: Session = Depends(get_session)
+):
+    """
+    获取与当前实验相同分类下的下一个实验的ID
+    """
+    return ExperimentService.get_next_exp_id(session, exp_id)
+
+@router.get("/{exp_id}/prev", response_model=ExperimentId)
+def read_experiment_detail(
+    exp_id: int = Path(..., description="当前实验ID"),
+    session: Session = Depends(get_session)
+):
+    """
+    获取与当前实验相同分类下的下一个实验的ID
+    """
+    return ExperimentService.get_prev_exp_id(session, exp_id)

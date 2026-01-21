@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from app.crud import crud_experiment
 from app.crud import crud_category
 from app.models.lab import Experiment
-
+from app.schemas.experiment import ExperimentId
 
 class ExperimentService:
     @staticmethod
@@ -52,3 +52,20 @@ class ExperimentService:
         exp_dict = exp.model_dump()
         exp_dict['content'] = content
         return exp_dict
+
+    @staticmethod
+    def get_next_exp_id(session: Session, exp_id: int) -> ExperimentId:
+        current_exp = crud_experiment.get_by_id(session,exp_id)
+        next_exp = crud_experiment.get_next_exp(session,exp_id,current_exp.category_id)
+        if not next_exp:
+            return ExperimentId()
+        return ExperimentId(id=next_exp.id)
+
+    @staticmethod
+    def get_prev_exp_id(session: Session, exp_id: int) -> ExperimentId:
+        current_exp = crud_experiment.get_by_id(session,exp_id)
+        prev_exp = crud_experiment.get_prev_exp(session,exp_id,current_exp.category_id)
+        if not prev_exp:
+            return ExperimentId()
+        return ExperimentId(id=prev_exp.id)
+

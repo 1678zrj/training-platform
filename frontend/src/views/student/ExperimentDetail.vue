@@ -1,14 +1,16 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import {ref, onMounted, watch} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import MarkdownIt from 'markdown-it'
 import { RefreshLeft,ArrowLeft } from '@element-plus/icons-vue'
 // 引入 github 风格的代码样式
 import 'github-markdown-css/github-markdown.css'
-import { ElMessageBox,ElMessage } from 'element-plus' // 引入 Loading 服务
+import {ElMessageBox, ElMessage, ElLoading} from 'element-plus' // 引入 Loading 服务
 import { useUserStore } from '@/stores/user.js'
 import request from '@/utils/request.js'
+
+
 
 const route = useRoute()
 const router = useRouter()
@@ -36,6 +38,7 @@ const fetchDetail = async () => {
 }
 // 重置环境逻辑
 const resetEnv = async () => {
+  let loadingInstance = null
   try {
     // 二次确认，防止手滑
     await ElMessageBox.confirm(
@@ -47,6 +50,13 @@ const resetEnv = async () => {
         type: 'warning',
       }
     )
+    loadingInstance = ElLoading.service(
+        {
+          lock: true,
+          text: '正在重置实验环境...',
+          background: 'rgba(0,0,0,0.5)'
+        }
+    )
 
     // 发送请求
     await request.post('/api/v1/containers/reset', null, {
@@ -54,52 +64,20 @@ const resetEnv = async () => {
     })
 
     ElMessage.success('环境已重置成功，请点击“开始实验”')
-
+    loadingInstance.close()
   } catch (error) {
     if (error !== 'cancel') {
        // 如果是后端返回 400 (容器正在运行)，拦截器会报错，这里不用额外处理
        console.error(error)
     }
+  }finally {
+    // 确保 loading 一定被关闭
+    loadingInstance?.close()
   }
 }
 
 
-// 按钮点击事件
-// const startExp = async () => {
-//   // 1. 开启全屏 Loading (因为启动容器可能需要 1-3 秒)
-//   const loadingInstance = ElLoading.service({
-//     lock: true,
-//     text: '正在初始化实验环境（分配资源、挂载数据）...',
-//     background: 'rgba(0, 0, 0, 0.7)',
-//   })
-//
-//   try {
-//     const expId = route.params.id
-//     // 2. 请求后端启动容器
-//     const res = await axios.post('/api/v1/containers/start', null, {
-//       params: {
-//         experiment_id: expId,
-//         user_id: userStore.id
-//       } // 根据 FastAPI 定义，这里用 Query 参数
-//     })
-//
-//     const containerInfo = res.data
-//
-//     // 3. 拼接跳转 URL
-//     // 假设你的服务器 IP 是 localhost (或者从环境变量读)
-//     // Jupyter 默认 URL 格式: http://ip:port/?token=xxx
-//     const targetUrl = `http://${location.hostname}:${containerInfo.host_port}/?token=${containerInfo.url_token}`
-//
-//     // 4. 打开新窗口
-//     window.open(targetUrl, '_blank')
-//
-//   } catch (error) {
-//     console.error(error)
-//     ElMessage.error('环境启动失败，请联系管理员')
-//   } finally {
-//     loadingInstance.close()
-//   }
-// }
+
 const startExp = () => {
   // 不再直接发请求，而是跳到 ActiveLab 页面，由那个页面去负责发请求
   // 这样用户体验更好，能看到页面切换
@@ -109,6 +87,60 @@ onMounted(() => {
   fetchDetail()
 })
 
+// 监听路由参数变化
+watch(
+  () => route.params.id,
+  (newId, oldId) => {
+    if (newId !== oldId) {
+      isLoading.value = true
+      fetchDetail()
+    }
+  }
+)
+
+const goNextExperiment = async () => {
+  try {
+    const id = route.params.id
+
+    const res = await request.get(`/api/v1/experiments/${id}/next`)
+    const nextId = res.data.id
+
+    if (!nextId) {
+      ElMessage.info('该分类下已是最后一个实验')
+      return
+    }
+
+    router.push({
+      name: 'ExperimentDetail',
+      params: { id: nextId }
+    })
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('获取下一个实验失败')
+  }
+}
+
+const goPrevExperiment = async () => {
+  try {
+    const id = route.params.id
+
+    const res = await request.get(`/api/v1/experiments/${id}/prev`)
+    const prevId = res.data.id
+
+    if (!prevId) {
+      ElMessage.info('该分类下已是第一个实验')
+      return
+    }
+
+    router.push({
+      name: 'ExperimentDetail',
+      params: { id: prevId }
+    })
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('获取上一个实验失败')
+  }
+}
 const goBack = () => {
   // router.back()
   // 明确指定要去哪里，不要依赖历史记录
@@ -137,24 +169,52 @@ const goBack = () => {
       </div>
 
       <div class="right-sidebar">
-        <div class="sidebar-card">
-<!--          <h3 class="card-title">学习进度</h3>-->
-<!--          <div class="progress-box">-->
-<!--            <span class="status-text">未完成</span>-->
-<!--            <el-progress :percentage="0" :show-text="false" class="progress-bar"/>-->
-<!--            <div class="percent-num">0%</div>-->
-<!--          </div>-->
-          <el-button type="primary" class="action-btn" @click="startExp()">开始实验 (Docker)</el-button>
-          <el-button
+
+        <div class="sidebar-card action-panel">
+      <!-- 主操作 -->
+      <el-button
+        type="primary"
+        size="large"
+        class="action-btn primary"
+        @click="startExp"
+      >
+        开始实验（Docker）
+      </el-button>
+
+      <!-- 导航操作 -->
+      <div class="nav-group">
+        <el-button
+          plain
+          type="success"
+          class="nav-btn"
+          @click="goPrevExperiment"
+        >
+          上一个实验
+        </el-button>
+        <el-button
+          plain
+          type="success"
+          class="nav-btn"
+          @click="goNextExperiment"
+        >
+          下一个实验
+        </el-button>
+      </div>
+
+      <!-- 危险操作 -->
+      <div class="danger-zone">
+        <el-button
           type="warning"
           link
           class="reset-btn"
           @click="resetEnv"
         >
           <el-icon><RefreshLeft /></el-icon>
-          <span style="margin-left: 4px">重置环境</span>
+          重置实验环境
         </el-button>
-        </div>
+  </div>
+</div>
+
 
 <!--        <div class="sidebar-card">-->
 <!--          <h3 class="card-title">相关推荐</h3>-->
@@ -258,11 +318,17 @@ const goBack = () => {
   margin: 0 auto;
   padding: 45px;
 }
-
+.markdown-body {
+  background: #fff;
+  border-radius: 8px;
+  line-height: 1.8;
+}
 /* 右侧侧边栏 */
 .right-sidebar {
   width: 300px;
   flex-shrink: 0;
+  position: sticky;
+  top: 20px;
 }
 
 .sidebar-card {
@@ -272,29 +338,6 @@ const goBack = () => {
   margin-bottom: 20px;
 }
 
-.card-title {
-  font-size: 16px;
-  font-weight: bold;
-  margin: 0 0 15px 0;
-  color: #333;
-}
-
-.status-text {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 5px;
-  display: block;
-}
-
-.progress-box { margin-bottom: 20px; }
-.progress-bar { margin: 10px 0; }
-.percent-num { text-align: right; color: #999; font-size: 12px; }
-
-.action-area {
-  display: flex;
-  flex-direction: column;
-  gap: 10px; /* 按钮之间的间距 */
-}
 
 .action-btn {
   width: 100%;
@@ -308,7 +351,49 @@ const goBack = () => {
 .reset-btn:hover {
   color: #b88230;
 }
+/* 右侧操作面板 */
+.action-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
 
+/* 主按钮 */
+.action-btn.primary {
+  height: 46px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* 上下实验导航 */
+.nav-group {
+  display: flex;
+  gap: 10px;
+}
+
+.nav-btn {
+  flex: 1;
+  height: 40px;
+  font-size: 14px;
+}
+
+/* 危险操作区域 */
+.danger-zone {
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px dashed #eee;
+  text-align: center;
+}
+
+.reset-btn {
+  font-size: 13px;
+  color: #E6A23C;
+}
+
+.reset-btn:hover {
+  color: #b88230;
+}
 
 .empty-placeholder { color: #999; font-size: 13px; text-align: center; padding: 20px 0; }
 </style>

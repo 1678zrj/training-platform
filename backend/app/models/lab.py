@@ -1,8 +1,17 @@
 from datetime import datetime
-from typing import Optional
-
+from typing import Optional, List
+from enum import Enum
 from sqlalchemy import UniqueConstraint
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
+
+
+class ResourceType(str, Enum):
+    MARKDOWN = "markdown"  # 传统的实验指导书
+    PDF = "pdf"            # PDF文档
+    VIDEO = "video"        # 视频文件（本地或对象存储）
+    LINK = "link"          # 外部链接（如B站视频、Github仓库）
+    IMAGE = "image"        # 架构图等辅助图片
+
 
 class Category(SQLModel, table=True):
     __tablename__ = "categories"
@@ -46,6 +55,30 @@ class Experiment(SQLModel, table=True):
 
     # 4. (可选) 存储限制 - 防止学生把磁盘写满
     storage_limit: str = Field(default="1g", description="磁盘配额")
+
+    # 【ORM 关系】方便代码中直接通过 experiment.resources 获取列表
+    resources: List["ExperimentResource"] = Relationship(back_populates="experiment")
+
+
+# --- 新增：实验资源表 (解决多文件/视频问题) ---
+class ExperimentResource(SQLModel, table=True):
+    __tablename__ = "experiment_resources"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    experiment_id: int = Field(foreign_key="experiments.id", index=True)
+
+    name: str = Field(description="资源显示的名称，如：第一章：环境配置视频")
+    resource_type: ResourceType = Field(description="资源类型：pdf, video, markdown等")
+
+    # 这里存储具体的路径或URL
+    # 如果是 video，可能是 http://oss.../1.mp4 或 bilibili iframe code
+    # 如果是 markdown，可能是 /data/docs/exp1/intro.md
+    file_path_or_url: str
+
+    # 排序字段，保证前端展示的顺序（先看文档，再看视频等）
+    sort_order: int = Field(default=0, description="展示顺序，越小越靠前")
+
+    experiment: Optional[Experiment] = Relationship(back_populates="resources")
 
 class UserLab(SQLModel, table=True):
     __tablename__ = "user_labs"

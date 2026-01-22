@@ -31,7 +31,7 @@ def read_experiment_detail(
     return ExperimentService.get_experiment_detail(session, exp_id)
 
 @router.get("/{exp_id}/next", response_model=ExperimentId)
-def read_experiment_detail(
+def get_next_experiment_id(
     exp_id: int = Path(..., description="当前实验ID"),
     session: Session = Depends(get_session)
 ):
@@ -41,7 +41,7 @@ def read_experiment_detail(
     return ExperimentService.get_next_exp_id(session, exp_id)
 
 @router.get("/{exp_id}/prev", response_model=ExperimentId)
-def read_experiment_detail(
+def get_prev_experiment_id(
     exp_id: int = Path(..., description="当前实验ID"),
     session: Session = Depends(get_session)
 ):

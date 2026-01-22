@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 
 load_dotenv()  # 默认查找当前工作目录及其父目录的 .env
 
+
+
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Training Platform"
     API_V1_STR: str = "/api/v1"

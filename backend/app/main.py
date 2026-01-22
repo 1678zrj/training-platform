@@ -9,7 +9,7 @@ from app.api.v1.api import api_router
 from app.crud import crud_user
 # 必须显式导入模型，否则 create_all 无法建表
 from app.models.user import User
-from app.models.lab import Category,Image,Experiment,UserLab,Container,Submission
+from app.models.lab import Category,Image,Experiment,UserLab,Container,Submission,ExperimentResource,ResourceType
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -69,7 +69,31 @@ async def lifespan(app: FastAPI):
             session.add(exp1)
             session.add(exp2)
             session.commit()
-
+            session.refresh(exp1)
+            session.refresh(exp2)
+            # 创建实验资源表
+            resource1 = ExperimentResource(
+                experiment_id = exp1.id,
+                name = "实验说明",
+                resource_type = ResourceType.MARKDOWN,
+                file_path_or_url = "/docs/pacman.md",
+            )
+            resource2 = ExperimentResource(
+                experiment_id=exp2.id,
+                name="实验说明",
+                resource_type=ResourceType.MARKDOWN,
+                file_path_or_url="/docs/watermark.md",
+            )
+            resource3 = ExperimentResource(
+                experiment_id=exp2.id,
+                name="实验说明2",
+                resource_type=ResourceType.MARKDOWN,
+                file_path_or_url="/docs/watermark.md",
+            )
+            session.add(resource1)
+            session.add(resource2)
+            session.add(resource3)
+            session.commit()
     yield
 
 

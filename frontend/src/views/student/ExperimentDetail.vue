@@ -9,6 +9,7 @@ import 'github-markdown-css/github-markdown.css'
 import {ElMessageBox, ElMessage, ElLoading} from 'element-plus' // 引入 Loading 服务
 import { useUserStore } from '@/stores/user.js'
 import request from '@/utils/request.js'
+import ExperimentResourceViewer from "@/components/experiment/ExperimentResourceViewer.vue";
 
 
 
@@ -28,10 +29,10 @@ const fetchDetail = async () => {
     experiment.value = res.data
 
     // 将 Markdown 转换为 HTML
-    htmlContent.value = md.render(res.data.content || '')
+    // htmlContent.value = md.render(res.data.content || '')
   } catch (error) {
     console.error(error)
-    htmlContent.value = '<h1>加载失败</h1><p>无法获取实验文档</p>'
+    // htmlContent.value = '<h1>加载失败</h1><p>无法获取实验文档</p>'
   } finally {
     isLoading.value = false
   }
@@ -144,7 +145,7 @@ const goPrevExperiment = async () => {
 const goBack = () => {
   // router.back()
   // 明确指定要去哪里，不要依赖历史记录
-    router.push({ name: 'ExperimentList', params: { id: experiment.category_id || 1 } })
+    router.push({ name: 'ExperimentList', params: { id: experiment.value.category_id || 2 } })
 }
 </script>
 
@@ -161,11 +162,12 @@ const goBack = () => {
 
     <div class="main-layout">
       <div class="content-card">
-        <div class="tabs-header">
-          <span class="tab-item active">实验内容</span>
-          </div>
+<!--        <div class="tabs-header">-->
+<!--          <span class="tab-item active">实验内容</span>-->
+<!--          </div>-->
 
-        <div class="markdown-body" v-html="htmlContent"></div>
+<!--        <div class="markdown-body" v-html="htmlContent"></div>-->
+        <ExperimentResourceViewer :resources="experiment.resources || []" />
       </div>
 
       <div class="right-sidebar">

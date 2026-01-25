@@ -24,7 +24,7 @@ export default defineConfig({
         changeOrigin:true
       },
       '/media':{
-        target:'http://localhost:8000',
+        target:'http://localhost:80',// 指向 Docker 运行的 Nginx
         changeOrigin:true
       },
       '/lab': { // 匹配新的路径前缀

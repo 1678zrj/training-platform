@@ -103,11 +103,12 @@ app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
 # =========================
 # 文件资源挂载
 # =========================
-app.mount(
-    "/media",
-    StaticFiles(directory="media"),
-    name="media"
-)
+# 不再用后端挂载文件资源，这对后端消耗过大
+# app.mount(
+#     "/media",
+#     StaticFiles(directory="media"),
+#     name="media"
+# )
 
 # 挂载 API V1 路由
 app.include_router(api_router, prefix=settings.API_V1_STR)

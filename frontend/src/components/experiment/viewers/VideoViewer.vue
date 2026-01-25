@@ -1,11 +1,12 @@
 <script setup>
-import { ref, computed, watch, onDeactivated } from 'vue'
+import { ref, computed, watch, onDeactivated, onMounted } from 'vue'
 import {
   VideoPause,
   VideoPlay,
   Download,
   Timer,
-  RefreshLeft
+  RefreshLeft,
+  ArrowDown
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
@@ -25,10 +26,8 @@ const currentTime = ref(0)
 const playbackRate = ref(1.0)
 const hasError = ref(false)
 
-// 资源地址
 const videoSource = computed(() => props.resource.file_path_or_url)
 
-// --- 格式化时间 (秒 -> mm:ss) ---
 const formatTime = (seconds) => {
   if (!seconds || isNaN(seconds)) return '00:00'
   const m = Math.floor(seconds / 60)
@@ -38,47 +37,54 @@ const formatTime = (seconds) => {
 
 // --- 事件监听 ---
 
-// 1. 元数据加载完成 (获取时长)
+// 1. 获取时长
 const handleLoadedMetadata = () => {
   if (videoRef.value) {
     duration.value = videoRef.value.duration
-    isLoading.value = false
   }
 }
 
-// 2. 缓冲/等待中
+// 2. 【核心修复】首帧已加载
+// loadeddata 比 canplay 更早触发，只要有画面了就关掉 Loading
+const handleLoadedData = () => {
+  isLoading.value = false
+  hasError.value = false
+}
+
+// 3. 视频已就绪 (双重保险)
+const handleCanPlay = () => {
+  isLoading.value = false
+}
+
+// 4. 缓冲中
 const handleWaiting = () => {
   isLoading.value = true
 }
 
-// 3. 开始播放 (缓冲结束)
+// 5. 开始播放
 const handlePlaying = () => {
   isLoading.value = false
   isPlaying.value = true
 }
 
-// 4. 暂停
+// 6. 暂停
 const handlePause = () => {
   isPlaying.value = false
 }
 
-// 5. 时间更新
 const handleTimeUpdate = () => {
   if (videoRef.value) {
     currentTime.value = videoRef.value.currentTime
   }
 }
 
-// 6. 加载错误
 const handleError = () => {
   isLoading.value = false
   hasError.value = true
-  // 具体的错误可以通过 videoRef.value.error 获取，这里简化处理
-  ElMessage.error('视频资源加载失败，格式不支持或链接失效')
+  ElMessage.error('视频资源加载失败')
 }
 
 // --- 控制逻辑 ---
-
 const togglePlay = () => {
   if (!videoRef.value) return
   if (videoRef.value.paused) {
@@ -108,16 +114,26 @@ const downloadVideo = () => {
   window.open(props.resource.file_path_or_url, '_blank')
 }
 
-// --- 生命周期与监听 ---
-
-// 核心优化：当用户切换 Tab (离开视频) 时，自动暂停
+// --- 生命周期 ---
 onDeactivated(() => {
   if (videoRef.value && !videoRef.value.paused) {
     videoRef.value.pause()
   }
 })
 
-// 监听资源切换，重置状态
+// 【核心修复】挂载时主动检查状态
+// 解决浏览器缓存视频时，事件早已触发导致一直 Loading 的问题
+onMounted(() => {
+  if (videoRef.value) {
+    // readyState: 0=HAVE_NOTHING, 1=HAVE_METADATA, 2=HAVE_CURRENT_DATA, 3=HAVE_FUTURE_DATA, 4=HAVE_ENOUGH_DATA
+    // 只要 >= 2 说明当前帧已有，可以取消 Loading 显示画面
+    if (videoRef.value.readyState >= 2) {
+      isLoading.value = false
+      duration.value = videoRef.value.duration || 0
+    }
+  }
+})
+
 watch(() => props.resource.id, () => {
   isLoading.value = true
   hasError.value = false
@@ -125,9 +141,8 @@ watch(() => props.resource.id, () => {
   duration.value = 0
   isPlaying.value = false
   playbackRate.value = 1.0
-  // 如果 video 元素存在，重置倍速
   if (videoRef.value) {
-    videoRef.value.load() // 重新加载新源
+    videoRef.value.load()
     videoRef.value.playbackRate = 1.0
   }
 })
@@ -159,7 +174,7 @@ watch(() => props.resource.id, () => {
           <el-button size="small">
             <el-icon class="el-icon--left"><Timer /></el-icon>
             {{ playbackRate }}x
-            <el-icon class="el-icon--right"><arrow-down /></el-icon>
+            <el-icon class="el-icon--right"><ArrowDown /></el-icon>
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
@@ -193,6 +208,8 @@ watch(() => props.resource.id, () => {
         controlsList="nodownload"
         disablePictureInPicture
         @loadedmetadata="handleLoadedMetadata"
+        @loadeddata="handleLoadedData"
+        @canplay="handleCanPlay"
         @waiting="handleWaiting"
         @playing="handlePlaying"
         @pause="handlePause"
@@ -219,7 +236,6 @@ watch(() => props.resource.id, () => {
   min-height: 400px;
 }
 
-/* 工具栏样式 (与 PdfViewer 保持一致) */
 .video-toolbar {
   display: flex;
   justify-content: space-between;
@@ -244,10 +260,9 @@ watch(() => props.resource.id, () => {
   text-align: center;
 }
 
-/* 视频容器 */
 .video-container {
   flex: 1;
-  background-color: #000; /* 影院模式背景 */
+  background-color: #000;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -261,7 +276,6 @@ watch(() => props.resource.id, () => {
   width: auto;
   height: auto;
   outline: none;
-  /* 加上阴影让视频在黑色背景中更立体（如果视频有黑边则看不出） */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
@@ -274,7 +288,6 @@ watch(() => props.resource.id, () => {
   justify-content: center;
 }
 
-/* 针对全屏时的样式优化 */
 .video-player:fullscreen {
   object-fit: contain;
 }

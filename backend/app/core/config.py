@@ -12,9 +12,9 @@ load_dotenv()  # 默认查找当前工作目录及其父目录的 .env
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Training Platform"
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "test_secret_key")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1天
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./media/db/database.db")
+    SECRET_KEY: str = "your-super-secret-key-change-it"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30   # 单位是分钟 因此60 * 24 1天
+    DATABASE_URL: str = "./media/db/training_platform.db"
 
     class Config:
         case_sensitive = True
@@ -25,4 +25,8 @@ settings = Settings()
 
 
 if __name__=='__main__':
+    print(settings.PROJECT_NAME)
+    print(settings.API_V1_STR)
+    print(settings.SECRET_KEY)
+    print(settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     print(settings.DATABASE_URL)

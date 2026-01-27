@@ -11,3 +11,4 @@ class ExperimentResourceService:
         full_path = os.path.join(os.getcwd(), resource.file_path_or_url.lstrip("/"))
         with open(full_path, "r", encoding="utf-8") as f:
             return f.read()
+

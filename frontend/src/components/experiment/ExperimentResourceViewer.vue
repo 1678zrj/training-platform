@@ -7,7 +7,8 @@ import {
   VideoCamera,
   Link as LinkIcon,
   Picture,
-  ArrowDown
+  ArrowDown,
+  Check
 } from '@element-plus/icons-vue'
 import MarkdownViewer from './viewers/MarkdownViewer.vue'
 import LinkViewer from './viewers/LinkViewer.vue'
@@ -33,6 +34,11 @@ const props = defineProps({
 const sortedResources = computed(() =>
   [...props.resources].sort((a, b) => a.sort_order - b.sort_order)
 )
+const isOverflowActive = computed(() => {
+  const current = Number(activeName.value)
+  return current >= maxVisibleTabs
+})
+
 
 const activeIndex = ref(0)
 
@@ -82,6 +88,16 @@ const handleOverflowSelect = (index) => {
   activeName.value = String(index)
 }
 
+// 监听资源列表的变化
+watch(
+  () => props.resources,
+  (newVal) => {
+    // 只要资源列表变了，就重置回第一个 Tab
+    // 这里也可以加个判断，只有当当前索引超出新列表长度时才重置，
+    // 但通常切换实验后直接回到第一个资源体验更好。
+    activeName.value = '0'
+  }
+)
 
 /* Tab 切换后滚动到顶部 */
 watch(activeName, async () => {
@@ -103,32 +119,7 @@ watch(activeName, async () => {
 
 </script>
 
-<!--<template>-->
-<!--  <div class="resource-viewer">-->
-<!--    &lt;!&ndash; Tabs &ndash;&gt;-->
-<!--    <div class="tabs-header">-->
-<!--      <span-->
-<!--        v-for="(res, index) in sortedResources"-->
-<!--        :key="res.id"-->
-<!--        :class="['tab-item', { active: index === activeIndex }]"-->
-<!--        @click="activeIndex = index"-->
-<!--      >-->
-<!--        {{ res.name }}-->
-<!--      </span>-->
-<!--    </div>-->
 
-<!--    &lt;!&ndash; Content &ndash;&gt;-->
-<!--    <div class="resource-content" v-if="activeResource">-->
-<!--      <component-->
-<!--        :is="viewerMap[activeResource.resource_type]"-->
-<!--        :resource="activeResource"-->
-<!--      />-->
-<!--    </div>-->
-<!--    <div v-else class="empty-placeholder">-->
-<!--      当前实验暂无资源-->
-<!--    </div>-->
-<!--  </div>-->
-<!--</template>-->
 <template>
 <el-tabs
   v-model="activeName"
@@ -158,46 +149,93 @@ watch(activeName, async () => {
 
   </el-tab-pane>
 <!-- More 下拉 Tab（仅当溢出时显示） -->
-  <template v-if="overflowTabs.length">
-    <el-tab-pane disabled name="__more">
-      <template #label>
-        <el-dropdown trigger="click">
-          <span class="more-tab">
-            更多
-            <el-icon><arrow-down /></el-icon>
-          </span>
+<!--  <template v-if="overflowTabs.length">-->
+<!--    <el-tab-pane disabled name="__more">-->
+<!--      <template #label>-->
+<!--        <el-dropdown trigger="click">-->
+<!--          <span-->
+<!--              class="more-tab"-->
+<!--              :class="{ 'is-active': isOverflowActive }"-->
+<!--          >-->
+<!--            更多-->
+<!--            <el-icon><arrow-down /></el-icon>-->
+<!--          </span>-->
 
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item
-                v-for="(res, idx) in overflowTabs"
-                :key="res.id"
-                @click="handleOverflowSelect(idx + maxVisibleTabs)"
+<!--          <template #dropdown>-->
+<!--            <el-dropdown-menu>-->
+<!--              <el-dropdown-item-->
+<!--                v-for="(res, idx) in overflowTabs"-->
+<!--                :key="res.id"-->
+<!--                @click="handleOverflowSelect(idx + maxVisibleTabs)"-->
+<!--                class="resource-dropdown-item"-->
+<!--                :class="{ 'is-selected': activeName === String(idx + maxVisibleTabs) }"-->
+
+<!--              >-->
+<!--                <div class="dropdown-item-content">-->
+<!--                  <div class="left-col">-->
+<!--                    <el-icon class="dropdown-icon">-->
+<!--                      <component :is="iconMap[res.resource_type]"-->
+<!--                      />-->
+<!--                    </el-icon>-->
+<!--                    <span>{{ res.name }}</span>-->
+<!--                  </div>-->
+<!--                  <el-icon v-if="activeName === String(idx + maxVisibleTabs)" class="check-icon">-->
+<!--                    <Check />-->
+<!--                  </el-icon>-->
+<!--                </div>-->
+<!--              </el-dropdown-item>-->
+<!--            </el-dropdown-menu>-->
+<!--          </template>-->
+<!--        </el-dropdown>-->
+<!--      </template>-->
+<!--    </el-tab-pane>-->
+<!--  </template>-->
+<template v-if="overflowTabs.length">
+  <el-tab-pane disabled name="__more">
+    <template #label>
+      <el-dropdown trigger="click">
+        <span class="more-tab" :class="{ 'is-active': isOverflowActive }">
+          更多
+          <el-icon><arrow-down /></el-icon>
+        </span>
+
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item
+              v-for="(res, idx) in overflowTabs"
+              :key="res.id"
+              @click="handleOverflowSelect(idx + maxVisibleTabs)"
+              class="resource-dropdown-item"
+              :class="{ 'is-selected': activeName === String(idx + maxVisibleTabs) }"
+            >
+              <el-tooltip
+                :content="typeLabelMap[res.resource_type]"
+                placement="left"
+                effect="dark"
+                :enterable="false"
               >
-                <el-icon class="dropdown-icon">
-                  <component :is="iconMap[res.resource_type]" />
-                </el-icon>
-                {{ res.name }}
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </template>
-    </el-tab-pane>
-  </template>
+                <div class="dropdown-item-content">
+                  <div class="left-col">
+                    <el-icon class="dropdown-icon">
+                      <component :is="iconMap[res.resource_type]" />
+                    </el-icon>
+                    <span>{{ res.name }}</span>
+                  </div>
+                  <el-icon v-if="activeName === String(idx + maxVisibleTabs)" class="check-icon">
+                    <Check />
+                  </el-icon>
+                </div>
+              </el-tooltip>
 
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+    </template>
+  </el-tab-pane>
+</template>
 </el-tabs>
 
-<!--<div class="resource-content" v-if="activeResource">-->
-<!--  <component-->
-<!--    :is="viewerMap[activeResource.resource_type]"-->
-<!--    :resource="activeResource"-->
-<!--  />-->
-<!--</div>-->
-
-<!--<div v-else class="empty-placeholder">-->
-<!--  当前实验暂无资源-->
-<!--</div>-->
   <!-- 内容区域 -->
 <div
     class="resource-content"
@@ -316,5 +354,44 @@ watch(activeName, async () => {
 
 .dropdown-icon {
   margin-right: 6px;
+}
+/* More 标签高亮状态 */
+.more-tab.is-active {
+  color: var(--el-color-primary);
+  font-weight: 600;
+}
+
+/* 下拉菜单项布局调整 */
+.resource-dropdown-item {
+  /* 确保 item 能够撑开布局 */
+  min-width: 150px;
+  padding: 0 !important; /* 清除默认 padding，由内部 content 控制 */
+}
+
+/* 使用 Flex 布局让图标和对勾对齐 */
+.dropdown-item-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 5px 16px; /* 恢复 Element Plus 默认的 padding */
+  box-sizing: border-box;
+  min-width: 160px; /* 稍微宽一点，防止 Tooltip 闪烁 */
+}
+
+.left-col {
+  display: flex;
+  align-items: center;
+}
+
+/* 下拉菜单选中状态 */
+:deep(.el-dropdown-menu__item.is-selected) {
+  color: var(--el-color-primary);
+  background-color: var(--el-color-primary-light-9); /* 浅色背景更明显 */
+}
+
+.check-icon {
+  margin-left: 12px;
+  font-size: 14px;
 }
 </style>

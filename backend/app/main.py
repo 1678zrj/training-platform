@@ -49,7 +49,7 @@ async def lifespan(app: FastAPI):
                 category_id=cat1.id,
                 image_id=img.id,
                 title="吃豆人-DQN",
-                doc_path="/docs/pacman.md",
+                doc_path="/media/docs/pacman.md",
                 template_path="/exp1",
                 image_path="/images/Packman.png",
                 description="基于强化学习算法实现吃豆人游戏的训练与控制"
@@ -58,7 +58,7 @@ async def lifespan(app: FastAPI):
                 category_id=cat1.id,
                 image_id=img2.id,
                 title="大语言模型水印检测",
-                doc_path="/docs/watermark.md",
+                doc_path="/media/docs/watermark.md",
                 template_path="/exp2",
                 image_path="/images/Watermark.png",
                 description="实现大模型文本水印嵌入与效果测试",
@@ -76,19 +76,19 @@ async def lifespan(app: FastAPI):
                 experiment_id = exp1.id,
                 name = "实验说明",
                 resource_type = ResourceType.MARKDOWN,
-                file_path_or_url = "/docs/pacman.md",
+                file_path_or_url = "/media/docs/pacman.md",
             )
             resource2 = ExperimentResource(
                 experiment_id=exp2.id,
                 name="实验说明",
                 resource_type=ResourceType.MARKDOWN,
-                file_path_or_url="/docs/watermark.md",
+                file_path_or_url="/media/docs/watermark.md",
             )
             resource3 = ExperimentResource(
                 experiment_id=exp2.id,
                 name="实验说明2",
                 resource_type=ResourceType.MARKDOWN,
-                file_path_or_url="/docs/watermark.md",
+                file_path_or_url="/media/docs/watermark.md",
             )
             session.add(resource1)
             session.add(resource2)

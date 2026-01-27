@@ -93,7 +93,8 @@ router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const token = userStore.token
   const role = userStore.role
-
+  console.log("token是:")
+  console.log(token)
   // 1. 如果去的是登录页，且已经有 token，直接根据角色跳转
   if (to.path === '/login' && token) {
     if (role === 0) return next('/student/analysis')

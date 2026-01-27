@@ -60,7 +60,7 @@ const resetEnv = async () => {
     )
 
     // 发送请求
-    await request.post('/api/v1/containers/reset', null, {
+    await request.post('/containers/reset', null, {
       params: { experiment_id: route.params.id }
     })
 
@@ -103,7 +103,7 @@ const goNextExperiment = async () => {
   try {
     const id = route.params.id
 
-    const res = await request.get(`/api/v1/experiments/${id}/next`)
+    const res = await request.get(`/experiments/${id}/next`)
     const nextId = res.data.id
 
     if (!nextId) {
@@ -125,7 +125,7 @@ const goPrevExperiment = async () => {
   try {
     const id = route.params.id
 
-    const res = await request.get(`/api/v1/experiments/${id}/prev`)
+    const res = await request.get(`/experiments/${id}/prev`)
     const prevId = res.data.id
 
     if (!prevId) {
@@ -162,11 +162,6 @@ const goBack = () => {
 
     <div class="main-layout">
       <div class="content-card">
-<!--        <div class="tabs-header">-->
-<!--          <span class="tab-item active">实验内容</span>-->
-<!--          </div>-->
-
-<!--        <div class="markdown-body" v-html="htmlContent"></div>-->
         <ExperimentResourceViewer :resources="experiment.resources || []" />
       </div>
 

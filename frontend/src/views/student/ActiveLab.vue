@@ -64,7 +64,7 @@ const initLab = async () => {
   try {
     // 调用 start 接口。因为后端写了 get_or_create，
     // 所以如果容器已经活着，它会直接返回 URL，不会重复创建，非常安全。
-    const res = await request.post('/api/v1/containers/start', null, {
+    const res = await request.post('/containers/start', null, {
       params: {
         experiment_id: expId
       }
@@ -106,7 +106,7 @@ const waitForToken = async (eid) => {
   for (let i = 0; i < maxRetries; i++) {
     // 我们可以复用 /start 接口，或者专门写一个 /status 接口
     // 因为 /start 是 get_or_create，所以查也是它
-    const res = await request.post('/api/v1/containers/start', null, {
+    const res = await request.post('/containers/start', null, {
       params: { experiment_id: eid }
     })
 
@@ -154,7 +154,7 @@ const endLab = () => {
   ).then(async () => {
     // 用户点击确定
     try {
-      await request.post('/api/v1/containers/stop', null, {
+      await request.post('/containers/stop', null, {
         params: {
           experiment_id: expId
         }

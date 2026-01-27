@@ -7,7 +7,7 @@ import router from '@/router'
 const service = axios.create({
   // 这里的 '/api' 配合 vite.config.js 的 proxy 使用
   // 如果是生产环境，这里通常会换成真实域名
-  baseURL: '',
+  baseURL: '/api/v1',
   timeout: 25000 // 请求超时时间：25秒
 })
 

@@ -15,6 +15,9 @@ def get_current_user(
     session: Session = Depends(get_session),
     token: str = Depends(oauth2_scheme)
 ) -> User:
+    # --- 新增调试代码 ---
+    print(f"DEBUG: 当前使用的 Secret Key 开头: {settings.SECRET_KEY[:5]}")
+    print(f"DEBUG: 当前连接的数据库: {settings.DATABASE_URL}")
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         username: str = payload.get("sub")

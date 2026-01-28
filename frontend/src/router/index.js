@@ -92,31 +92,78 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const token = userStore.token
+  const refresh_token = userStore.refresh_token
   const role = userStore.role
-  console.log("token是:")
-  console.log(token)
-  // 1. 如果去的是登录页，且已经有 token，直接根据角色跳转
-  if (to.path === '/login' && token) {
-    if (role === 0) return next('/student/analysis')
-    return next('/dashboard')
+  // console.log("token是:")
+  // console.log(token)
+  // console.log("refresh_token是:")
+  // console.log(refresh_token)
+  // // 1. 如果去的是登录页，且已经有 token，直接根据角色跳转
+  // if (to.path === '/login' && token) {
+  //   if (role === 0) return next('/student/analysis')
+  //   return next('/dashboard')
+  // }
+  //
+  // // 2. 如果没有 token，且去的不是登录页 -> 强制去登录
+  // if (to.path !== '/login' && !token) {
+  //   return next('/login')
+  // }
+  //
+  // // 3. 权限校验 (防止学生手动输入 URL 访问管理页)
+  // if (to.meta.roles) {
+  //   if (!to.meta.roles.includes(role)) {
+  //     // 权限不足，根据角色踢回对应主页
+  //     if (role === 0) return next('/student/analysis')
+  //     return next('/dashboard')
+  //   }
+  // }
+  //
+  // // 4. 放行
+  // next()
+  //  登录校验完全重写
+  // 调试日志 (可选)
+  console.log("路由守卫检查:", { path: to.path, token: !!token, refresh: !!refresh_token, role })
+  //这里处理去登录页的逻辑
+  if (to.path === '/login'){
+    // 如果token存在就跳转至主页，无需登录（这里不管是token还是refresh_token都可）
+    if (token || refresh_token){
+      if (role === 0){
+        return next("/student/analysis")
+      }
+      return next("/dashboard")
+    }
+    // 没 Token，允许访问登录页
+    return next()
   }
-
-  // 2. 如果没有 token，且去的不是登录页 -> 强制去登录
-  if (to.path !== '/login' && !token) {
-    return next('/login')
+  //运行到这里表明用户不是去登录页，存在两种情况
+  // 1、token和refresh_token均不存在
+  // 2、token或refresh_token存在，那么要进行权限验证
+  // 均不存在，老老实实去登录，重新刷新token
+  if (!token&&!refresh_token){
+    return next("/login")
   }
-
-  // 3. 权限校验 (防止学生手动输入 URL 访问管理页)
+  //运行到这里说明token存在，那么对于需要特定权限的路径，需要进行权限验证，看用户是否有权限访问该路径
+  // 如果该路径设定了权限
   if (to.meta.roles) {
-    if (!to.meta.roles.includes(role)) {
-      // 权限不足，根据角色踢回对应主页
-      if (role === 0) return next('/student/analysis')
-      return next('/dashboard')
+    // 如果该路径不允许当前用户访问，那么跳转到默认主页
+    if (!to.meta.roles.includes(role)){
+      if (role === 0){
+        // 学生跳转的默认主页
+        return next('/student/analysis')
+      }else {
+        // 其它用户跳转的主页
+        return next('/dashboard')
+      }
+    }
+    //如果该路径允许当前用户访问，那么直接放行
+    else{
+      next()
     }
   }
-
-  // 4. 放行
+  //允许到这里说明token存在并且路径没有特殊权限要求
   next()
+
+
 })
 
 export default router

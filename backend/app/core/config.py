@@ -14,7 +14,10 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = "your-super-secret-key-change-it"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30   # 单位是分钟 因此60 * 24 1天
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 1
+    ALGORITHM: str = "HS256"
     DATABASE_URL: str = "./media/db/training_platform.db"
+
 
     class Config:
         case_sensitive = True

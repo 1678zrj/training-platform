@@ -35,16 +35,18 @@ const handleLogin = async () => {
     await userStore.login(loginForm)
 
     ElMessage.success('登录成功')
-
+    const role = userStore.role
     // 根据角色跳转
-    if (userStore.role === 0) {
-      router.push('/dashboard') // 学生
+    if (role === 0) {
+      // 学生 -> 跳转到学情分析页
+      router.push('/student/analysis')
     } else {
-      router.push('/dashboard') // 管理员
+      // 老师/管理员 -> 跳转到仪表盘
+      router.push('/dashboard')
     }
 
   } catch (error) {
-    console.error(error)
+    console.error('Login Error:', error)
     // 防止 error.response 为空导致的报错
     const msg = error.response?.data?.detail || '登录失败，用户名或密码错误'
     ElMessage.error(msg)

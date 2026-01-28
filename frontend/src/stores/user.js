@@ -5,9 +5,19 @@ import axios from 'axios'
 export const useUserStore = defineStore('user', () => {
   // 状态
   const token = ref(localStorage.getItem('token') || '')
+  const refresh_token = ref(localStorage.getItem('refresh_token') || '')
   const role = ref(Number(localStorage.getItem('role')) || 0) // 0, 1, 2
   const username = ref(localStorage.getItem('username') || '')
   const id = ref(Number(localStorage.getItem("id")) || 0)
+
+
+  //单独更新access_token的函数
+  const setToken = (newToken) => {
+    token.value = newToken
+    localStorage.setItem('token', newToken)
+
+  }
+
   // 动作：登录
   const login = async (loginForm) => {
     // 发送请求
@@ -18,11 +28,13 @@ export const useUserStore = defineStore('user', () => {
 
     // 更新状态
     token.value = res.data.access_token
+    refresh_token.value = res.data.refresh_token
     role.value = res.data.role
     username.value = res.data.username // 假设后端也返回了 username
     id.value =res.data.id
     // 持久化保存
     localStorage.setItem('token', token.value)
+    localStorage.setItem('refresh_token', refresh_token.value)
     localStorage.setItem('role', role.value)
     localStorage.setItem('username', username.value)
     localStorage.setItem('id', id.value)
@@ -31,11 +43,12 @@ export const useUserStore = defineStore('user', () => {
   // 动作：登出
   const logout = () => {
     token.value = ''
+    refresh_token.value = ''
     role.value = 0
     username.value = ''
     id.value = 0
     localStorage.clear()
   }
 
-  return { token, role, username, id, login, logout }
+  return { token, refresh_token, role, username, id, login, logout, setToken }
 })

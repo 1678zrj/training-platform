@@ -171,9 +171,7 @@ service.interceptors.response.use(
             try {
               // 发起刷新请求
               // 注意：这里我们使用 refresh_token 去后端换新 access_token
-              const { data } = await axios.post('/api/v1/auth/refresh', {
-                refresh_token: userStore.refresh_token
-              })
+              const { data } = await axios.post('/api/v1/auth/refresh')
 
               // 假设后端返回结构是 { accessToken: "..." }，根据你之前的 Python 代码调整
               const newAccessToken = data.access_token
@@ -191,7 +189,7 @@ service.interceptors.response.use(
 
             } catch (refreshError) {
               // 刷新失败（Refresh Token 过期或无效）
-              userStore.logout()
+              await userStore.logout()
               router.push('/login')
               ElMessage.error('登录已过期，请重新登录')
 

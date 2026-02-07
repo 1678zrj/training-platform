@@ -49,7 +49,7 @@ watch(
 const startLab = (expId) => {
   console.log('进入实训:', expId)
   // 这里以后写 router.push 去具体的实验操作台
-  router.push(`/student/experiment/${expId}`)
+  router.push(`/experiment/${expId}`)
 }
 </script>
 

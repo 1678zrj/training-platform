@@ -10,7 +10,6 @@ class UserLogin(SQLModel):
 # 后端返回给前端的 Token
 class Token(SQLModel):
     access_token: str
-    refresh_token: str
     token_type: str
     role: int
     username: str

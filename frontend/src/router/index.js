@@ -17,6 +17,37 @@ const router = createRouter({
       component: Layout,
       redirect: '/dashboard', // 默认跳这里，后面守卫会再次重定向
       children: [
+        {
+              path:'profile/manage',
+              name:'ProfileManage',
+              component:() =>import('../views/public/ProfileManage.vue'),
+              meta:{title: '个人信息管理'}
+        },
+        {
+            path: 'category/:id',
+            name: 'ExperimentList',
+            component:() => import('../views/public/ExperimentList.vue')
+        },
+       // 新增：实验详情页 (在 category 之后)
+        {
+          path: 'experiment/:id',
+          name: 'ExperimentDetail',
+          component: () => import('../views/public/ExperimentDetail.vue'),
+          meta: { title: '实验详情' }
+        },
+        {
+          path: 'llm',
+          name: 'chatbot',
+          redirect: '/llm/assistant',
+          children:[
+            {
+              path: 'assistant',
+              name: 'AIAssistant',
+              component:() => import('../views/public/AIassistant.vue'),
+              meta: {title:'AI助手'}
+            }
+          ]
+        },
         // --- 0级权限：学生页面 ---
         {
           path: 'student',
@@ -30,28 +61,11 @@ const router = createRouter({
               component:() => import('../views/student/Analysis.vue'),
               meta: {title:'学情分析'}
             },
-            {
-              path:'profile/manage',
-              name:'StudentProfileManage',
-              component:() =>import('../views/student/ProfileManage.vue'),
-              meta:{title: '个人信息管理'}
-            },
-            {
-              path: 'category/:id',
-              name: 'ExperimentList',
-              component:() => import('../views/student/ExperimentList.vue')
-            },
+
             {
               path: 'submit',
               name: 'StudentSubmitFile',
               component:() => import('../views/student/Submit.vue')
-            },
-              // 新增：实验详情页 (在 category 之后)
-            {
-              path: 'experiment/:id',
-              name: 'ExperimentDetail',
-              component: () => import('../views/student/ExperimentDetail.vue'),
-              meta: { title: '实验详情' }
             }
           ]
         },
@@ -82,7 +96,7 @@ const router = createRouter({
     {
       path: '/lab/:id',
       name: 'ActiveLab',
-      component: () => import('../views/student/ActiveLab.vue'),
+      component: () => import('../views/public/ActiveLab.vue'),
       meta: { roles: [0, 1, 2] } // 权限控制
     },
   ]
@@ -92,13 +106,12 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const token = userStore.token
-  const refresh_token = userStore.refresh_token
   const role = userStore.role
   // console.log("token是:")
   // console.log(token)
   // console.log("refresh_token是:")
   // console.log(refresh_token)
-  // // 1. 如果去的是登录页，且已经有 token，直接根据角色跳转
+  // 1. 如果去的是登录页，且已经有 token，直接根据角色跳转
   // if (to.path === '/login' && token) {
   //   if (role === 0) return next('/student/analysis')
   //   return next('/dashboard')
@@ -122,11 +135,11 @@ router.beforeEach((to, from, next) => {
   // next()
   //  登录校验完全重写
   // 调试日志 (可选)
-  console.log("路由守卫检查:", { path: to.path, token: !!token, refresh: !!refresh_token, role })
+  console.log("路由守卫检查:", { path: to.path, token: !!token, role })
   //这里处理去登录页的逻辑
   if (to.path === '/login'){
     // 如果token存在就跳转至主页，无需登录（这里不管是token还是refresh_token都可）
-    if (token || refresh_token){
+    if (token){
       if (role === 0){
         return next("/student/analysis")
       }
@@ -139,7 +152,7 @@ router.beforeEach((to, from, next) => {
   // 1、token和refresh_token均不存在
   // 2、token或refresh_token存在，那么要进行权限验证
   // 均不存在，老老实实去登录，重新刷新token
-  if (!token&&!refresh_token){
+  if (!token){
     return next("/login")
   }
   //运行到这里说明token存在，那么对于需要特定权限的路径，需要进行权限验证，看用户是否有权限访问该路径
@@ -157,7 +170,7 @@ router.beforeEach((to, from, next) => {
     }
     //如果该路径允许当前用户访问，那么直接放行
     else{
-      next()
+      return next()
     }
   }
   //允许到这里说明token存在并且路径没有特殊权限要求
